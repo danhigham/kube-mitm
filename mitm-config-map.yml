@@ -1,0 +1,59 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mitm-configmap
+data:
+  addons.py: |
+    import socket
+    import json
+    import sys
+
+    class LogRequests:
+        def __init__(self):
+            self.host = '10.0.0.54'
+            self.port = 32698
+
+
+        def request(self, flow):
+            headers = {
+              name: value
+              for name, value in flow.request.headers.items()
+            }
+            msg = { '@host': flow.request.pretty_host, '@path': flow.request.path, '@url': flow.request.pretty_url, '@headers': headers }
+
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            except socket.error:
+                sys.exit(1)
+
+            sock.sendto(bytes(json.dumps(msg), "utf-8"), (self.host, self.port))
+
+            sock.close()
+
+    addons = [
+        LogRequests()
+    ]
+  mitmproxy-ca-cert.cer: |
+    -----BEGIN CERTIFICATE-----
+    MIIDoTCCAomgAwIBAgIGDe2xZoPFMA0GCSqGSIb3DQEBCwUAMCgxEjAQBgNVBAMM
+    CW1pdG1wcm94eTESMBAGA1UECgwJbWl0bXByb3h5MB4XDTE4MDcxMTAzNDQyOVoX
+    DTIxMDcxMjAzNDQyOVowKDESMBAGA1UEAwwJbWl0bXByb3h5MRIwEAYDVQQKDAlt
+    aXRtcHJveHkwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCjX+u3Xb7W
+    H8CIM2soCu3oBpLjEPo4IC2hm1GFcPGeSTJ4HkOhdag3oF+4KD2Smdla4ooh+JL4
+    631vYIrZpPYp8+fEX5VFg6HJ4e0VNOLJXvZrr+CZrU2AL8q0vNCNBD2nmSwVRP2t
+    wM6iKxHH5lMvg6F8QBE9NeAz4AEo829AFTr7SBfPhUWmQY1uKoPl6AXXjhaMWt9o
+    NnyyXfljZnhGkC2oCdap0hY19YVtpUPgJ5HGCMAR3AlQSDkhBf9cf7Lg4CUA3Bkb
+    oCu/B/nPUSFfT0Uk/owc8HCNZXXZd0kXw9R8C5Fv8BxLMYoglXQe0W0IpAQLbNdS
+    pjKPl8Xlx7MVAgMBAAGjgdAwgc0wDwYDVR0TAQH/BAUwAwEB/zARBglghkgBhvhC
+    AQEEBAMCAgQweAYDVR0lBHEwbwYIKwYBBQUHAwEGCCsGAQUFBwMCBggrBgEFBQcD
+    BAYIKwYBBQUHAwgGCisGAQQBgjcCARUGCisGAQQBgjcCARYGCisGAQQBgjcKAwEG
+    CisGAQQBgjcKAwMGCisGAQQBgjcKAwQGCWCGSAGG+EIEATAOBgNVHQ8BAf8EBAMC
+    AQYwHQYDVR0OBBYEFPfNN0IHKFwXIsM2/zZgviKjhC7JMA0GCSqGSIb3DQEBCwUA
+    A4IBAQAuokA2XVdogDivW0l0j4UZrJPSVymUeAtk51xsjb+cSCazwG84Z+8ucsjB
+    q40rBd0JzlLW+BZ7QSkPGZQ96Qf89S1UUpovQ9AI2looCJop28K2FbUaUrrJdMQz
+    2RqvXByAN6pWzhNVLOf2G55AMHTb0HcqO5MoY0FT01ZtRTvXtePHKtuJUvHqHobJ
+    UpV08wKws5nws64hffZrYC7ngvDccgAkCGGgE9NyT/m7IwAndB1HfDMZOqbcgBha
+    bZEsNDV04C908N8OwwavuHD259NTWHSR6fmPMM22q/gFeQFE1ruaJ/WIvl44HRm5
+    Zc6hyQM2RasREIQvR53kZlDbgRjH
+    -----END CERTIFICATE-----

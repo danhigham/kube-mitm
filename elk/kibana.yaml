@@ -1,0 +1,54 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: kibana 
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      stack: elk
+  template:
+    metadata:
+      labels:
+        app: kibana
+        stack: elk
+    spec:
+      containers:
+      - name: kibana
+        image: docker.elastic.co/kibana/kibana-oss:6.3.1
+        ports:
+        - containerPort: 5601
+        env:
+          - name: ELASTICSEARCH_URL
+            value: "http://elasticsearch:9200"
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: kibana-http
+spec:
+  selector:
+    app: kibana
+  ports:
+  - protocol: TCP
+    name: http
+    port: 5601
+    targetPort: 5601
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: kibana-web-ingress
+spec:
+  tls:
+  - hosts:
+    - kibana.high.am
+    secretName: higham-secret
+  rules:
+  - host: kibana.high.am
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: kibana-http
+          servicePort: 5601

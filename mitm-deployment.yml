@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mitm-deployment
+  labels:
+    app: mitm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mitm
+  template:
+    metadata:
+      labels:
+        app: mitm
+    spec:
+      containers:
+      - name: mitm
+        image: mitmproxy/mitmproxy:latest
+        command: ["docker-entrypoint.sh"]
+        args: ["mitmdump", "-s", "/usr/share/mitm/addons.py", "--confdir", "/usr/share/mitm/config"]
+        ports:
+        - containerPort: 8080
+        - containerPort: 8081
+        volumeMounts:
+        - name: mitm-addon
+          mountPath: /usr/share/mitm/addon
+        - name: mitm-ca
+          mountPath: /usr/shar/mitm/config
+      volumes:
+      - name: mitm-ca
+        configMap:
+          name: mitm-configmap
+          items: 
+            - key: mitmproxy-ca-cert.cer
+              path: mitmproxy-ca-cert.cer
+      - name: mitm-addon
+        configMap:
+          name: mitm-configmap
+          items:
+            - key: addons.py
+              path: addons.py

@@ -1,0 +1,63 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: logstash
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      stack: elk
+  template:
+    metadata:
+      labels:
+        app: logstash
+        stack: elk
+    spec:
+      containers:
+      - name: logstash
+        image: docker.elastic.co/logstash/logstash-oss:6.3.1
+        ports:
+        - containerPort: 5000
+        volumeMounts:
+          - name: logstash-pipeline-volume 
+            mountPath: /usr/share/logstash/pipeline
+      volumes:
+      - name: logstash-pipeline-volume
+        configMap:
+          name: logging-configmap
+          items:
+            - key: logstash.conf
+              path: logstash.conf
+
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: logstash-http
+spec:
+  selector:
+    app: logstash
+  ports:
+  - protocol: UDP
+    name: udp-listener 
+    port: 5000
+    targetPort: 5000
+  type: NodePort
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logging-configmap
+data:
+  logstash.conf: |
+    input {
+      udp {
+        port => 5000
+        codec => json
+      }
+    }
+    output {
+      elasticsearch {
+        hosts => ['elasticsearch:9200']
+      }
+    }
