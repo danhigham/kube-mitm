@@ -1,14 +1,13 @@
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: v1
+kind: "ReplicationController"
 metadata:
-  name: mitm-deployment
+  name: mitm
   labels:
     app: mitm
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: mitm
+    app: mitm
   template:
     metadata:
       labels:
@@ -18,22 +17,19 @@ spec:
       - name: mitm
         image: mitmproxy/mitmproxy:latest
         command: ["docker-entrypoint.sh"]
-        args: ["mitmdump", "-s", "/usr/share/mitm/addons.py", "--confdir", "/usr/share/mitm/config"]
+        args: ["mitmdump", "-s", "/usr/share/mitm/addons.py"]
         ports:
         - containerPort: 8080
         - containerPort: 8081
         volumeMounts:
+        - name: mitm
+          mountPath: "/home/mitmproxy/.mitmproxy"
         - name: mitm-addon
-          mountPath: /usr/share/mitm/addon
-        - name: mitm-ca
-          mountPath: /usr/shar/mitm/config
+          mountPath: /usr/share/mitm
       volumes:
-      - name: mitm-ca
-        configMap:
-          name: mitm-configmap
-          items: 
-            - key: mitmproxy-ca-cert.cer
-              path: mitmproxy-ca-cert.cer
+      - name: mitm
+        persistentVolumeClaim:
+          claimName: mitm
       - name: mitm-addon
         configMap:
           name: mitm-configmap

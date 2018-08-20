@@ -34,21 +34,3 @@ spec:
     name: http
     port: 5601
     targetPort: 5601
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  name: kibana-web-ingress
-spec:
-  tls:
-  - hosts:
-    - kibana.high.am
-    secretName: higham-secret
-  rules:
-  - host: kibana.high.am
-    http:
-      paths:
-      - path: /
-        backend:
-          serviceName: kibana-http
-          servicePort: 5601

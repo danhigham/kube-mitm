@@ -13,12 +13,26 @@ spec:
         app: elasticsearch
         stack: elk
     spec:
+      volumes:
+      - name: elasticsearch
+        persistentVolumeClaim:
+          claimName: elasticsearch
+      initContainers:
+      - name: volume-mount-hack
+        image: busybox
+        command: ["sh", "-c", "chown -R 1000:1000 /elastic-data"]
+        volumeMounts:
+        - name: elasticsearch
+          mountPath: /elastic-data
       containers:
       - name: elasticsearch
         image: docker.elastic.co/elasticsearch/elasticsearch-oss:6.3.1
         ports:
         - containerPort: 9200
         - containerPort: 9300
+        volumeMounts:
+        - name: elasticsearch
+          mountPath: /usr/share/elasticsearch/data
         command:
         - /bin/sh
         - -c
